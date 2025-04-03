@@ -1,12 +1,13 @@
 import pty
 import os
 from openai import OpenAI
+import subprocess
 client = OpenAI()
 
 def spawn_shell():
     while True:
         try:
-            line = input()
+            line = input("$ ")
             master, slave = pty.openpty()
             pid = os.fork()
             if pid == 0:  # Child process
@@ -30,7 +31,8 @@ def spawn_shell():
                                 temperature=0
                             )
                             command = response.output_text.split("```bash")[1].split("```")[0].strip()
-                            os.execvp("sh", ["sh", "-c", command])
+                            result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                            print(result.stdout, end="")
                         else:
                             print(decoded_output, end="")
                     except OSError:
