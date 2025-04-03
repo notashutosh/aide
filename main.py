@@ -46,4 +46,11 @@ if __name__ == "__main__":
         exit(1)
     else:
         print('openai found')
+    
+    if "OPENAI_API_KEY" not in os.environ or not os.environ["OPENAI_API_KEY"]:
+        print("Error: The 'OPENAI_API_KEY' environment variable is not set. Please set it and try again.")
+        exit(1)
+    else:
+        print('openai api key found')
+    
     spawn_shell()
