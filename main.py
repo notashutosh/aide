@@ -3,13 +3,62 @@ import os
 from openai import OpenAI
 import subprocess
 import readline
+from prompt_toolkit import prompt
+from prompt_toolkit.key_binding import KeyBindings
+import ptyprocess
+from prompt_toolkit.layout import Layout, HSplit, VSplit
+from prompt_toolkit.widgets import TextArea, Label, Frame
+from prompt_toolkit.application import Application
+import asyncio
 
 client = OpenAI()
 
 def spawn_shell():
     while True:
         try:
-            line = input("$ ")
+            bindings = KeyBindings()
+
+            @bindings.add("c-t")  # Detect Control+T
+            def _(event):
+                process = ptyprocess.PtyProcess.spawn(["sh"])
+                print("Ctrl+T pressed—Choose an option:")
+                print("1) Create recipe")
+                print("2) Edit recipe")
+                while True:
+                    user_input = input("Enter your choice (1/2): ").strip().lower()
+                    if user_input in ["1", "2"]:
+                        instruction_box = TextArea(height=10, prompt="Instruction: ")
+                        output_file_box = TextArea(height=10, prompt="Output File: ")
+                        final_result_box = TextArea(height=10, prompt="Final Result: ")
+
+                        layout = Layout(
+                            HSplit([
+                                Frame(title="Instruction", body=instruction_box),
+                                Frame(title="Output File", body=output_file_box),
+                                Frame(title="Final Result", body=final_result_box),
+                            ])
+                        )
+                        break
+                    else:
+                        print("Invalid choice. Please enter '1' or '2'.")
+                app = Application(layout=layout, full_screen=True, key_bindings=KeyBindings())
+
+                @app.key_bindings.add("c-d")  # Detect Control+D
+                def _(event):
+                    event.app.exit()
+                
+                @app.key_bindings.add("tab")  # Detect Tab key
+                def _(event):
+                    event.app.layout.focus_next()
+                try:
+                    # Use `await` directly if the event loop is already running
+                    asyncio.create_task(app.run_async())
+                except KeyboardInterrupt:
+                    print("\nOperation canceled by user.")
+                process.terminate()
+                
+
+            line = prompt("$ ", key_bindings=bindings)
             master, slave = pty.openpty()
             pid = os.fork()
             if pid == 0:  # Child process
