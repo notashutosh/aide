@@ -2,6 +2,8 @@ import pty
 import os
 from openai import OpenAI
 import subprocess
+import readline
+
 client = OpenAI()
 
 def spawn_shell():
