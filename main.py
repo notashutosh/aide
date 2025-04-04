@@ -32,7 +32,11 @@ def spawn_shell():
                                 input=f'{line}. I am running a mac. Give me just the command so I can run it in my terminal. Do not include any explanation or additional text.',
                                 temperature=0
                             )
-                            command = response.output_text.split("```bash")[1].split("```")[0].strip()
+                            try:
+                                command = response.output_text.split("```bash")[1].split("```")[0].strip()
+                            except (IndexError, AttributeError):
+                                print("I don't understand what you want")
+                                continue
                             result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                             print(result.stdout, end="")
                         else:
